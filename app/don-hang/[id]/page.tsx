@@ -7,6 +7,13 @@ import { WaitForPayment } from "./WaitForPayment";
 
 export const dynamic = "force-dynamic";
 
+// Ai có link/số điện thoại cũng xem được trang này, nên che bớt thông tin cá nhân
+const maskPhone = (p: string) => p.slice(0, 3) + "****" + p.slice(-3);
+const maskAddress = (a: string) => {
+  const parts = a.split(",").map((x) => x.trim()).filter(Boolean);
+  return parts.length > 1 ? "***, " + parts.slice(-2).join(", ") : "***";
+};
+
 export default async function OrderPage({ params, searchParams }: {
   params: Promise<{ id: string }>; searchParams: Promise<{ loi?: string }>;
 }) {
@@ -24,6 +31,7 @@ export default async function OrderPage({ params, searchParams }: {
         </h2>
         <p>Mã đơn hàng: <b>{order.id}</b> · Trạng thái: <span className={`tag ${order.status}`}>{STATUS_LABELS[order.status]}</span></p>
         <p className="muted">Phương thức: {PAYMENT_LABELS[order.payment_method]}</p>
+        <p className="muted" style={{ fontSize: 14 }}>Bạn có thể xem lại đơn này bất cứ lúc nào ở mục <Link href="/tra-cuu" style={{ color: "var(--brand)" }}>Đơn hàng</Link> bằng số điện thoại đặt hàng.</p>
         {loi && <p className="err">Giao dịch bị hủy hoặc lỗi. Bạn có thể liên hệ shop hoặc đặt lại đơn.</p>}
         {order.status === "paid" && <p style={{ color: "var(--ok)" }}>Shop đã nhận được {vnd(order.total)}. Cảm ơn bạn, đơn hàng sẽ sớm được giao!</p>}
         {order.payment_method === "cod" && <p>Shop sẽ gọi xác nhận và giao hàng. Bạn thanh toán {vnd(order.total)} khi nhận hàng.</p>}
@@ -48,7 +56,7 @@ export default async function OrderPage({ params, searchParams }: {
 
       <div className="panel">
         <h3 style={{ marginTop: 0 }}>Chi tiết đơn hàng</h3>
-        <p>{order.customer_name} · {order.phone}<br /><span className="muted">{order.address}</span></p>
+        <p>{order.customer_name} · {maskPhone(order.phone)}<br /><span className="muted">{maskAddress(order.address)}</span></p>
         <table>
           <tbody>
             {order.items.map((i, k) => (

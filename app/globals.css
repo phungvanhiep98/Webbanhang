@@ -79,3 +79,4 @@ th { color: var(--muted); font-weight: 500; }
 .opt { display: inline-flex; align-items: center; gap: 6px; }
 .opt:disabled { color: #bbb; background: #fafafa; cursor: not-allowed; text-decoration: line-through; }
 .opt-img { width: 24px; height: 24px; object-fit: cover; border-radius: 2px; }
+@media (max-width: 800px) { .cart-link { font-size: 14px; } }

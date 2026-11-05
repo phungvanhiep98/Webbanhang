@@ -38,6 +38,10 @@ export function CheckoutForm({ methods }: { methods: string[] }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Không tạo được đơn hàng");
       clear();
+      try {
+        const mine = JSON.parse(localStorage.getItem("my_orders") || "[]");
+        localStorage.setItem("my_orders", JSON.stringify([data.orderId, ...mine].slice(0, 20)));
+      } catch {}
       window.location.href = data.redirect;
     } catch (e) {
       setErr((e as Error).message); setBusy(false);

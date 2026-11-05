@@ -35,6 +35,7 @@ interface Store {
   insert(o: NewOrder): Promise<void>;
   get(id: string): Promise<Row | undefined>;
   list(): Promise<Row[]>;
+  byPhone(phone: string): Promise<Row[]>;
   setStatus(id: string, status: string, ref: string | null): Promise<void>;
 }
 
@@ -55,6 +56,7 @@ function postgresStore(url: string): Store {
     insert: async (o) => { await q(`INSERT INTO orders (${COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, values(o)); },
     get: async (id) => (await q("SELECT * FROM orders WHERE id = $1", [id]))[0],
     list: () => q("SELECT * FROM orders ORDER BY created_at DESC LIMIT 1000"),
+    byPhone: (phone) => q("SELECT * FROM orders WHERE phone = $1 ORDER BY created_at DESC LIMIT 20", [phone]),
     setStatus: async (id, s, ref) => { await q("UPDATE orders SET status = $1, payment_ref = COALESCE($2, payment_ref) WHERE id = $3", [s, ref, id]); },
   };
 }
@@ -79,6 +81,7 @@ function sqliteStore(): Store {
     insert: async (o) => { db.prepare(`INSERT INTO orders (${COLS}) VALUES (${values(o).map(() => "?").join(",")})`).run(...values(o)); },
     get: async (id) => db.prepare("SELECT * FROM orders WHERE id = ?").get(id) as Row | undefined,
     list: async () => db.prepare("SELECT * FROM orders ORDER BY created_at DESC LIMIT 1000").all() as Row[],
+    byPhone: async (phone) => db.prepare("SELECT * FROM orders WHERE phone = ? ORDER BY created_at DESC LIMIT 20").all(phone) as Row[],
     setStatus: async (id, s, ref) => { db.prepare("UPDATE orders SET status = ?, payment_ref = COALESCE(?, payment_ref) WHERE id = ?").run(s, ref, id); },
   };
 }
@@ -98,6 +101,7 @@ const parse = (r: Row | undefined): Order | undefined =>
 export const insertOrder = (o: NewOrder) => store().insert(o);
 export const getOrder = async (id: string) => parse(await store().get(id));
 export const listOrders = async () => (await store().list()).map((r) => parse(r)!);
+export const ordersByPhone = async (phone: string) => (await store().byPhone(phone)).map((r) => parse(r)!);
 export const setStatus = (id: string, status: string, paymentRef?: string) => store().setStatus(id, status, paymentRef ?? null);
 
 export function newOrderId() {

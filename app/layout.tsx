@@ -17,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <form action="/" className="search">
                 <input name="q" placeholder="Tìm sản phẩm..." />
               </form>
+              <Link href="/tra-cuu" className="cart-link">Đơn hàng</Link>
               <Link href="/gio-hang" className="cart-link">Giỏ hàng <CartBadge /></Link>
             </div>
           </header>
