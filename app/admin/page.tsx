@@ -2,6 +2,7 @@ import { isAdmin } from "@/lib/admin";
 import { listOrders } from "@/lib/db";
 import { vnd, PAYMENT_LABELS, STATUS_LABELS } from "@/lib/format";
 import { login, updateStatus } from "./actions";
+import { AdminNav } from "@/components/AdminNav";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
 
   return (
     <>
+      <AdminNav on="orders" />
       <div className="panel" style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
         <div><div className="muted">Tổng đơn</div><b style={{ fontSize: 24 }}>{all.length}</b></div>
         <div><div className="muted">Chờ xử lý</div><b style={{ fontSize: 24 }}>{all.filter((o) => o.status === "pending").length}</b></div>
@@ -44,7 +46,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
                 <td className="muted">{new Date(o.created_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</td>
                 <td>{o.customer_name}<br /><span className="muted">{o.phone}<br />{o.address}</span>{o.note && <div className="muted">Ghi chú: {o.note}</div>}</td>
                 <td>{o.items.map((i, k) => <div key={k}>{i.name}{i.variant ? ` (${i.variant})` : ""} × {i.qty}</div>)}</td>
-                <td className="price">{vnd(o.total)}</td>
+                <td className="price">{vnd(o.total)}{o.coupon && <div className="muted" style={{ fontSize: 12 }}>Mã {o.coupon}: −{vnd(o.discount)}</div>}</td>
                 <td>{PAYMENT_LABELS[o.payment_method]?.split(" (")[0]}{o.payment_ref && <div className="muted">GD: {o.payment_ref}</div>}</td>
                 <td>
                   <form key={o.status} action={updateStatus} style={{ display: "flex", gap: 6 }}>

@@ -68,7 +68,9 @@ export default async function OrderPage({ params, searchParams }: {
             ))}
           </tbody>
         </table>
-        <div className="sum" style={{ marginTop: 12 }}><span>Phí vận chuyển</span><span>{order.shipping ? vnd(order.shipping) : "Miễn phí"}</span></div>
+        <div className="sum" style={{ marginTop: 12 }}><span>Tạm tính</span><span>{vnd(order.subtotal)}</span></div>
+        {order.discount > 0 && <div className="sum" style={{ color: "var(--ok)" }}><span>Mã giảm giá {order.coupon}</span><span>−{vnd(order.discount)}</span></div>}
+        <div className="sum"><span>Phí vận chuyển</span><span>{order.shipping ? vnd(order.shipping) : "Miễn phí"}</span></div>
         <div className="sum total"><span>Tổng cộng</span><span>{vnd(order.total)}</span></div>
         <Link href="/" className="btn ghost" style={{ marginTop: 12 }}>Tiếp tục mua sắm</Link>
       </div>

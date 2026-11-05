@@ -157,3 +157,11 @@ th { color: var(--muted); font-weight: 500; }
   .cat { flex: 0 0 96px; padding: 10px 6px; font-size: 13px; }
   .hero-cta .btn { padding: 10px 18px; }
 }
+.coupon { display: flex; gap: 8px; margin: 10px 0 4px; }
+.coupon input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid #ccc; border-radius: 2px; font-size: 14px; text-transform: uppercase; }
+.admin-nav { display: flex; gap: 8px; margin-bottom: 16px; }
+.admin-nav a { padding: 8px 16px; background: #fff; border-radius: 6px; border: 1px solid var(--line); font-weight: 500; }
+.admin-nav a.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+.coupon-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0 14px; }
+.ship-bar { height: 6px; background: #ffe4dc; border-radius: 3px; overflow: hidden; margin: 6px 0 10px; }
+.ship-bar > div { height: 100%; background: var(--brand); }

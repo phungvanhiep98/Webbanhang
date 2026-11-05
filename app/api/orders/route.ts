@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProduct, priceOf, stockOf } from "@/lib/products";
-import { insertOrder, newOrderId, OrderItem } from "@/lib/db";
+import { insertOrder, newOrderId, OrderItem, useCoupon } from "@/lib/db";
+import { checkCoupon } from "@/lib/coupons";
 import { shippingFor } from "@/lib/format";
 import { vnpayEnabled, vnpayPaymentUrl, momoEnabled, momoPaymentUrl, bankInfo } from "@/lib/payments";
 
@@ -35,10 +36,20 @@ export async function POST(req: NextRequest) {
 
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const shipping = shippingFor(subtotal);
+
+  let discount = 0, coupon: string | null = null;
+  const code = String(b.coupon ?? "").trim().toUpperCase();
+  if (code) {
+    const r = await checkCoupon(code, subtotal);
+    if ("error" in r) return NextResponse.json({ error: r.error }, { status: 400 });
+    if (!(await useCoupon(r.coupon.code))) return NextResponse.json({ error: "Mã giảm giá đã hết lượt dùng" }, { status: 400 });
+    discount = r.discount; coupon = r.coupon.code;
+  }
+
   const order = {
     id: newOrderId(), customer_name: name, phone, email: String(b.email ?? "") || null,
-    address, note: String(b.note ?? "") || null, items, subtotal, shipping,
-    total: subtotal + shipping, payment_method: method,
+    address, note: String(b.note ?? "") || null, items, subtotal, discount, coupon, shipping,
+    total: subtotal - discount + shipping, payment_method: method,
   };
   await insertOrder(order);
 

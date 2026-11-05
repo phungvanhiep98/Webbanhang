@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/Cart";
 import { vnd, shippingFor, PAYMENT_LABELS } from "@/lib/format";
@@ -16,6 +16,23 @@ export function CheckoutForm({ methods }: { methods: string[] }) {
   const [method, setMethod] = useState(methods[0]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [code, setCode] = useState("");
+  const [cp, setCp] = useState<{ code: string; discount: number; label: string } | null>(null);
+  const [cpErr, setCpErr] = useState("");
+
+  // Tạm tính đổi (sửa giỏ ở tab khác) thì kiểm tra lại mã
+  useEffect(() => {
+    if (cp) applyCode(cp.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal]);
+
+  async function applyCode(c = code) {
+    setCpErr("");
+    if (!c.trim()) return setCp(null);
+    const res = await fetch(`/api/coupons?code=${encodeURIComponent(c.trim())}&subtotal=${subtotal}`);
+    const data = await res.json();
+    if (!res.ok) { setCp(null); setCpErr(data.error); } else setCp(data);
+  }
 
   if (!lines.length)
     return <div className="panel">Giỏ hàng trống. <Link href="/" style={{ color: "var(--brand)" }}>Mua sắm ngay</Link></div>;
@@ -31,7 +48,7 @@ export function CheckoutForm({ methods }: { methods: string[] }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...f, paymentMethod: method,
+          ...f, paymentMethod: method, coupon: cp?.code ?? "",
           items: lines.map((l) => ({ productId: l.productId, variant: l.variant, qty: l.qty })),
         }),
       });
@@ -79,8 +96,20 @@ export function CheckoutForm({ methods }: { methods: string[] }) {
         ))}
         <hr style={{ border: 0, borderTop: "1px solid var(--line)" }} />
         <div className="sum"><span>Tạm tính</span><span>{vnd(subtotal)}</span></div>
+        <div className="coupon">
+          <input placeholder="Mã giảm giá" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); applyCode(); } }} />
+          <button type="button" className="btn sm ghost" onClick={() => applyCode()}>Áp dụng</button>
+        </div>
+        {cpErr && <p className="err" style={{ margin: "4px 0" }}>{cpErr}</p>}
+        {cp && (
+          <div className="sum" style={{ color: "var(--ok)" }}>
+            <span>Mã {cp.code} <small className="muted">({cp.label})</small> <button type="button" className="link-btn" onClick={() => { setCp(null); setCode(""); }}>Bỏ</button></span>
+            <span>−{vnd(cp.discount)}</span>
+          </div>
+        )}
         <div className="sum"><span>Phí vận chuyển</span><span>{ship ? vnd(ship) : "Miễn phí"}</span></div>
-        <div className="sum total"><span>Tổng cộng</span><span>{vnd(subtotal + ship)}</span></div>
+        <div className="sum total"><span>Tổng cộng</span><span>{vnd(subtotal - (cp?.discount ?? 0) + ship)}</span></div>
         {err && <p className="err">{err}</p>}
         <button className="btn" style={{ width: "100%", marginTop: 12 }} disabled={busy}>
           {busy ? "Đang xử lý..." : "Đặt hàng"}
