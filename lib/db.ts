@@ -61,7 +61,9 @@ function postgresStore(url: string): Store {
 
 function sqliteStore(): Store {
   /* eslint-disable @typescript-eslint/no-require-imports */
-  const Database = require("better-sqlite3") as typeof import("better-sqlite3");
+  // Nạp lúc chạy (không đóng gói), để build trên Vercel không cần thư viện này
+  const nodeRequire = eval("require") as NodeRequire;
+  const Database = nodeRequire("better-sqlite3") as typeof import("better-sqlite3");
   const path = require("path") as typeof import("path");
   const fs = require("fs") as typeof import("fs");
   /* eslint-enable @typescript-eslint/no-require-imports */
