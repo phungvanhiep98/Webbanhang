@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getOrder } from "@/lib/db";
 import { vnd, PAYMENT_LABELS, STATUS_LABELS } from "@/lib/format";
 import { bankInfo, vietQrUrl } from "@/lib/payments";
+import { WaitForPayment } from "./WaitForPayment";
 
 export const dynamic = "force-dynamic";
 
@@ -19,11 +20,12 @@ export default async function OrderPage({ params, searchParams }: {
     <>
       <div className="panel">
         <h2 style={{ marginTop: 0 }}>
-          {loi ? "Thanh toán chưa thành công" : "Đặt hàng thành công 🎉"}
+          {loi ? "Thanh toán chưa thành công" : order.status === "paid" ? "Thanh toán thành công ✅" : "Đặt hàng thành công 🎉"}
         </h2>
         <p>Mã đơn hàng: <b>{order.id}</b> · Trạng thái: <span className={`tag ${order.status}`}>{STATUS_LABELS[order.status]}</span></p>
         <p className="muted">Phương thức: {PAYMENT_LABELS[order.payment_method]}</p>
         {loi && <p className="err">Giao dịch bị hủy hoặc lỗi. Bạn có thể liên hệ shop hoặc đặt lại đơn.</p>}
+        {order.status === "paid" && <p style={{ color: "var(--ok)" }}>Shop đã nhận được {vnd(order.total)}. Cảm ơn bạn, đơn hàng sẽ sớm được giao!</p>}
         {order.payment_method === "cod" && <p>Shop sẽ gọi xác nhận và giao hàng. Bạn thanh toán {vnd(order.total)} khi nhận hàng.</p>}
       </div>
 
@@ -39,6 +41,7 @@ export default async function OrderPage({ params, searchParams }: {
             <p>Số tiền: <b className="price">{vnd(order.total)}</b></p>
             <p>Nội dung: <b>{order.id}</b></p>
             <p className="muted">Vui lòng giữ nguyên nội dung chuyển khoản. Đơn sẽ được xác nhận khi shop nhận được tiền.</p>
+            <WaitForPayment id={order.id} />
           </div>
         </div>
       )}

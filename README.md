@@ -28,6 +28,14 @@ npm run dev                  # mở http://localhost:3000
 - VNPay/MoMo: trạng thái tự chuyển "Đã thanh toán" qua IPN
   (`/api/payment/vnpay/ipn`, `/api/payment/momo/ipn`).
 
+## Tự xác nhận chuyển khoản (SePay)
+
+1. Đăng ký https://my.sepay.vn, liên kết tài khoản ngân hàng nhận tiền.
+2. Webhooks → Thêm webhook: sự kiện "Có tiền vào", URL `<SITE_URL>/api/payment/sepay`, xác thực **API Key**.
+3. Thêm biến `SEPAY_API_KEY` (đúng key đó) trên Vercel rồi Redeploy.
+
+Khi khách chuyển khoản có mã đơn trong nội dung và đủ số tiền, đơn tự chuyển "Đã thanh toán" và trang đơn của khách tự cập nhật.
+
 ## Đưa lên mạng bằng Vercel (miễn phí)
 
 1. Vào https://vercel.com, đăng nhập bằng GitHub, bấm **Add New → Project**, chọn repo `Webbanhang`, bấm **Deploy**.
