@@ -184,3 +184,4 @@ th { color: var(--muted); font-weight: 500; }
   .hero-main { gap: 14px; }
   .hero-logo { width: 72px; height: 72px; }
 }
+.fc.fb { background: #1877f2; font-size: 26px; font-family: Arial, sans-serif; }

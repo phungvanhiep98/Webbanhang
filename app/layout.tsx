@@ -44,9 +44,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div>
                 <h4>Liên hệ</h4>
                 {info.hotline && <p>☎ Hotline: <a href={telUrl}>{info.hotline}</a></p>}
-                {zaloUrl && <p>💬 <a href={zaloUrl} target="_blank" rel="noopener">Chat Zalo</a></p>}
+                {zaloUrl && <p>💬 Zalo: <a href={zaloUrl} target="_blank" rel="noopener">{info.zalo}</a></p>}
                 {messengerUrl && <p>💬 <a href={messengerUrl} target="_blank" rel="noopener">Messenger</a></p>}
-                {info.facebook && <p>👍 <a href={info.facebook} target="_blank" rel="noopener">Facebook</a></p>}
+                {info.facebook && <p>👍 <a href={info.facebook} target="_blank" rel="noopener">{info.facebook.includes("/groups/") ? "Nhóm Facebook của shop" : "Facebook"}</a></p>}
                 {info.shopee && <p>🛍️ <a href={info.shopee} target="_blank" rel="noopener">Gian hàng Shopee</a></p>}
               </div>
               <div>
