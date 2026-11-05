@@ -1,9 +1,12 @@
 import Link from "next/link";
 import type { Product } from "@/lib/products";
 import { getCatalog, categoriesOf } from "@/lib/catalog";
+import { getPosts } from "@/lib/blog";
 import { ProductCard } from "@/components/ProductCard";
 import { shop } from "@/lib/shop";
 import { FREE_SHIP_FROM, vnd } from "@/lib/format";
+import { siteUrl } from "@/lib/payments";
+import type { Metadata } from "next";
 
 const SORTS: Record<string, { label: string; fn: (a: Product, b: Product) => number }> = {
   "": { label: "Phổ biến", fn: (a, b) => (b.sold ?? 0) - (a.sold ?? 0) },
@@ -20,9 +23,24 @@ function qs(params: Record<string, string>) {
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ c?: string; q?: string; s?: string }> }): Promise<Metadata> {
+  const { c, q, s } = await searchParams;
+  if (c && !q && !s) return {
+    title: `${c} cho bé | ${shop.name}`,
+    description: `Mua ${c.toLowerCase()} cho bé tại ${shop.name}: giá tốt, freeship đơn từ ${vnd(FREE_SHIP_FROM)}, thanh toán khi nhận hàng.`,
+    alternates: { canonical: `/?c=${encodeURIComponent(c)}` },
+  };
+  return {
+    title: `${shop.name} - ${shop.tagline}`,
+    description: `${shop.name}: ${shop.tagline.toLowerCase()}. Tất cotton, dép có quai, giày tập đi, giày búp bê, giày thể thao cho bé. Freeship đơn từ ${vnd(FREE_SHIP_FROM)}, COD toàn quốc.`,
+    alternates: { canonical: "/" },
+    robots: q || s ? { index: false, follow: true } : undefined,
+  };
+}
+
 export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string; c?: string; s?: string }> }) {
   const { q = "", c = "", s = "" } = await searchParams;
-  const products = await getCatalog();
+  const [products, posts] = await Promise.all([getCatalog(), getPosts()]);
   const categories = () => categoriesOf(products);
   const sort = SORTS[s] ? s : "";
   const norm = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
@@ -38,6 +56,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
     <>
       {home && (
         <>
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org", "@type": "Store", name: shop.name, description: shop.tagline,
+            url: siteUrl(), logo: `${siteUrl()}/logo.png`, image: `${siteUrl()}/logo.png`,
+            ...(shop.zalo ? { telephone: shop.zalo } : {}),
+            sameAs: [shop.shopee, shop.facebook].filter(Boolean),
+          }).replace(/</g, "\\u003c") }} />
           <section className="hero">
             <div className="hero-main">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -109,6 +133,19 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
         <div className="grid">{list.map((p) => <ProductCard key={p.id} p={p} />)}</div>
         {list.length === 0 && <div className="panel">Không tìm thấy sản phẩm phù hợp.</div>}
       </section>
+
+      {home && posts.length > 0 && (
+        <section className="sec">
+          <div className="sec-head"><h2>📖 Góc bố mẹ</h2><Link href="/blog" className="more">Xem tất cả ›</Link></div>
+          <div className="posts">
+            {posts.slice(0, 3).map((p) => (
+              <Link key={p.slug} href={`/blog/${p.slug}`} className="post-card">
+                <div><h3 style={{ margin: 0, fontSize: 17 }}>{p.title}</h3><p>{p.excerpt}</p><span className="muted">Đọc tiếp ›</span></div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </>
   );
 }

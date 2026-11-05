@@ -4,6 +4,7 @@ const TABS = [
   ["orders", "/admin", "📋 Đơn hàng"],
   ["products", "/admin/san-pham", "👟 Sản phẩm"],
   ["coupons", "/admin/ma-giam-gia", "🎟️ Mã giảm giá"],
+  ["posts", "/admin/bai-viet", "📝 Bài viết"],
   ["notify", "/admin/thong-bao", "🔔 Thông báo"],
 ] as const;
 

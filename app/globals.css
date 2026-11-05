@@ -185,3 +185,33 @@ th { color: var(--muted); font-weight: 500; }
   .hero-logo { width: 72px; height: 72px; }
 }
 .fc.fb { background: #1877f2; font-size: 26px; font-family: Arial, sans-serif; }
+.subnav { background: #fff; border-bottom: 1px solid var(--line); }
+.subnav .wrap { display: flex; gap: 24px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+.subnav a { padding: 10px 0; font-size: 14px; font-weight: 500; color: #444; border-bottom: 2px solid transparent; }
+.subnav a:hover { color: var(--brand); border-bottom-color: var(--brand); }
+.page-title { font-size: 24px; margin: 0 0 16px; }
+.posts { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.post-card { background: #fff; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; transition: .15s; border: 1px solid transparent; }
+.post-card:hover { border-color: var(--brand); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.post-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+.post-card > div { padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.post-card h2 { font-size: 18px; margin: 0; line-height: 1.4; }
+.post-card p { margin: 0; color: #555; font-size: 14px; line-height: 1.6; flex: 1; }
+.post-card .muted { font-size: 13px; }
+.article { max-width: 820px; margin-left: auto; margin-right: auto; padding: 28px 36px; }
+.article h1 { font-size: 28px; line-height: 1.35; margin: 0 0 6px; }
+.article-cover { width: 100%; border-radius: 8px; margin: 12px 0; }
+.prose { font-size: 16.5px; line-height: 1.8; color: #333; }
+.prose h2 { font-size: 21px; margin: 28px 0 8px; color: var(--text); }
+.prose h3 { font-size: 18px; margin: 22px 0 6px; }
+.prose p { margin: 0 0 14px; }
+.prose ul, .prose ol { margin: 0 0 14px; padding-left: 22px; }
+.prose li { margin-bottom: 4px; }
+.prose a { color: var(--brand); text-decoration: underline; }
+.prose img { max-width: 100%; border-radius: 6px; }
+.about-logo { width: 120px; height: 120px; border-radius: 50%; display: block; margin: 0 auto 8px; }
+@media (max-width: 800px) {
+  .subnav .wrap { gap: 18px; }
+  .article { padding: 20px 16px; } .article h1 { font-size: 22px; }
+  .posts { grid-template-columns: 1fr; }
+}

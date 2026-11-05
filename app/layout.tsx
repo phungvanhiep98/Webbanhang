@@ -5,9 +5,10 @@ import { CartProvider, CartBadge } from "@/components/Cart";
 import { ChatButtons } from "@/components/ChatButtons";
 import { shop as info, telUrl, zaloUrl, messengerUrl } from "@/lib/shop";
 import { FREE_SHIP_FROM, vnd } from "@/lib/format";
+import { siteUrl } from "@/lib/payments";
 
 const shop = info.name;
-export const metadata: Metadata = { title: shop, openGraph: { images: ["/logo.png"] }, description: `${shop} - ${info.tagline}. Giao hàng toàn quốc, thanh toán khi nhận hàng hoặc chuyển khoản QR.` };
+export const metadata: Metadata = { metadataBase: new URL(siteUrl()), title: shop, openGraph: { images: ["/logo.png"] }, description: `${shop} - ${info.tagline}. Giao hàng toàn quốc, thanh toán khi nhận hàng hoặc chuyển khoản QR.` };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -28,6 +29,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/gio-hang" className="cart-link">Giỏ hàng <CartBadge /></Link>
             </div>
           </header>
+          <nav className="subnav">
+            <div className="wrap">
+              <Link href="/">Trang chủ</Link>
+              <Link href="/#tat-ca">Sản phẩm</Link>
+              <Link href="/blog">Blog</Link>
+              <Link href="/gioi-thieu">Giới thiệu</Link>
+              <Link href="/tra-cuu">Tra cứu đơn</Link>
+            </div>
+          </nav>
           <main className="wrap main">{children}</main>
           <footer className="footer">
             <div className="wrap foot-grid">
@@ -58,6 +68,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
               <div>
                 <h4>Hỗ trợ</h4>
+                <p><Link href="/gioi-thieu">Giới thiệu</Link></p>
+                <p><Link href="/blog">Blog cho bố mẹ</Link></p>
                 <p><Link href="/tra-cuu">Tra cứu đơn hàng</Link></p>
                 <p><Link href="/gio-hang">Giỏ hàng</Link></p>
               </div>

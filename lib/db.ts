@@ -58,6 +58,9 @@ interface Store {
   setCouponActive(code: string, active: boolean): Promise<void>;
   useCoupon(code: string): Promise<boolean>; // +1 lượt nếu còn lượt
   productEdits(): Promise<Row[]>;
+  posts(): Promise<Row[]>;
+  savePost(p: Post, oldSlug: string | null): Promise<void>;
+  deletePost(slug: string): Promise<void>;
   saveProductEdit(e: ProductEdit): Promise<void>;
   setting(key: string): Promise<string | undefined>;
   setSetting(key: string, value: string): Promise<void>;
@@ -73,6 +76,14 @@ export type ProductEdit = {
 };
 const EDIT_TABLE = `CREATE TABLE IF NOT EXISTS product_edits (
     id TEXT PRIMARY KEY, hidden INTEGER NOT NULL DEFAULT 0, prices TEXT, stock TEXT, sold_extra INTEGER NOT NULL DEFAULT 0)`;
+export type Post = {
+  slug: string; title: string; excerpt: string; content: string; cover: string;
+  published: boolean; created_at: string; updated_at: string;
+};
+const POST_TABLE = `CREATE TABLE IF NOT EXISTS posts (
+    slug TEXT PRIMARY KEY, title TEXT NOT NULL, excerpt TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '',
+    cover TEXT NOT NULL DEFAULT '', published INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`;
+const postValues = (p: Post) => [p.slug, p.title, p.excerpt, p.content, p.cover, p.published ? 1 : 0, p.created_at, p.updated_at];
 const SETTINGS_TABLE = "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)";
 const editValues = (e: ProductEdit) => [e.id, e.hidden ? 1 : 0, e.prices ? JSON.stringify(e.prices) : null, e.stock ? JSON.stringify(e.stock) : null, e.sold_extra];
 
@@ -97,7 +108,7 @@ function postgresStore(url: string): Store {
     payment_method TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', payment_ref TEXT)`)
     .then(() => pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount INTEGER NOT NULL DEFAULT 0"))
     .then(() => pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon TEXT"))
-    .then(() => pool.query(COUPON_TABLE)).then(() => pool.query(EDIT_TABLE)).then(() => pool.query(SETTINGS_TABLE));
+    .then(() => pool.query(COUPON_TABLE)).then(() => pool.query(EDIT_TABLE)).then(() => pool.query(SETTINGS_TABLE)).then(() => pool.query(POST_TABLE));
   const q = async (sql: string, args: unknown[] = []) => { await ready; return (await pool.query(sql, args)).rows as Row[]; };
   return {
     insert: async (o) => { await q(`INSERT INTO orders (${COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, values(o)); },
@@ -117,6 +128,13 @@ function postgresStore(url: string): Store {
       ON CONFLICT (id) DO UPDATE SET hidden=$2, prices=$3, stock=$4, sold_extra=$5`, editValues(e)); },
     setting: async (k) => (await q("SELECT value FROM settings WHERE key = $1", [k]))[0]?.value as string | undefined,
     setSetting: async (k, v) => { await q("INSERT INTO settings (key, value) VALUES ($1,$2) ON CONFLICT (key) DO UPDATE SET value=$2", [k, v]); },
+    posts: () => q("SELECT * FROM posts ORDER BY created_at DESC"),
+    savePost: async (p, old) => {
+      if (old && old !== p.slug) await q("DELETE FROM posts WHERE slug = $1", [old]);
+      await q(`INSERT INTO posts (slug, title, excerpt, content, cover, published, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        ON CONFLICT (slug) DO UPDATE SET title=$2, excerpt=$3, content=$4, cover=$5, published=$6, updated_at=$8`, postValues(p));
+    },
+    deletePost: async (slug) => { await q("DELETE FROM posts WHERE slug = $1", [slug]); },
   };
 }
 
@@ -139,7 +157,7 @@ function sqliteStore(): Store {
   for (const col of ["discount INTEGER NOT NULL DEFAULT 0", "coupon TEXT"]) {
     try { db.exec(`ALTER TABLE orders ADD COLUMN ${col}`); } catch { /* đã có cột */ }
   }
-  db.exec(COUPON_TABLE); db.exec(EDIT_TABLE); db.exec(SETTINGS_TABLE);
+  db.exec(COUPON_TABLE); db.exec(EDIT_TABLE); db.exec(SETTINGS_TABLE); db.exec(POST_TABLE);
   return {
     insert: async (o) => { db.prepare(`INSERT INTO orders (${COLS}) VALUES (${values(o).map(() => "?").join(",")})`).run(...values(o)); },
     get: async (id) => db.prepare("SELECT * FROM orders WHERE id = ?").get(id) as Row | undefined,
@@ -159,6 +177,14 @@ function sqliteStore(): Store {
       ON CONFLICT (id) DO UPDATE SET hidden=excluded.hidden, prices=excluded.prices, stock=excluded.stock, sold_extra=excluded.sold_extra`).run(...editValues(e)); },
     setting: async (k) => (db.prepare("SELECT value FROM settings WHERE key = ?").get(k) as { value: string } | undefined)?.value,
     setSetting: async (k, v) => { db.prepare("INSERT INTO settings (key, value) VALUES (?,?) ON CONFLICT (key) DO UPDATE SET value=excluded.value").run(k, v); },
+    posts: async () => db.prepare("SELECT * FROM posts ORDER BY created_at DESC").all() as Row[],
+    savePost: async (p, old) => {
+      if (old && old !== p.slug) db.prepare("DELETE FROM posts WHERE slug = ?").run(old);
+      db.prepare(`INSERT INTO posts (slug, title, excerpt, content, cover, published, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)
+        ON CONFLICT (slug) DO UPDATE SET title=excluded.title, excerpt=excluded.excerpt, content=excluded.content, cover=excluded.cover,
+        published=excluded.published, updated_at=excluded.updated_at`).run(...postValues(p));
+    },
+    deletePost: async (slug) => { db.prepare("DELETE FROM posts WHERE slug = ?").run(slug); },
   };
 }
 
@@ -206,3 +232,11 @@ export const listProductEdits = async (): Promise<ProductEdit[]> =>
 export const saveProductEdit = (e: ProductEdit) => store().saveProductEdit(e);
 export const getSetting = (k: string) => store().setting(k);
 export const setSetting = (k: string, v: string) => store().setSetting(k, v);
+
+const parsePost = (r: Row): Post => ({
+  slug: String(r.slug), title: String(r.title), excerpt: String(r.excerpt ?? ""), content: String(r.content ?? ""),
+  cover: String(r.cover ?? ""), published: Number(r.published) === 1, created_at: String(r.created_at), updated_at: String(r.updated_at),
+});
+export const listPosts = async () => (await store().posts()).map(parsePost);
+export const savePost = (p: Post, oldSlug: string | null = null) => store().savePost(p, oldSlug);
+export const deletePost = (slug: string) => store().deletePost(slug);
