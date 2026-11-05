@@ -7,7 +7,7 @@ import { shop as info, telUrl, zaloUrl, messengerUrl } from "@/lib/shop";
 import { FREE_SHIP_FROM, vnd } from "@/lib/format";
 
 const shop = info.name;
-export const metadata: Metadata = { title: shop, description: `${shop} - ${info.tagline}. Giao hàng toàn quốc, thanh toán khi nhận hàng hoặc chuyển khoản QR.` };
+export const metadata: Metadata = { title: shop, openGraph: { images: ["/logo.png"] }, description: `${shop} - ${info.tagline}. Giao hàng toàn quốc, thanh toán khi nhận hàng hoặc chuyển khoản QR.` };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,7 +16,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CartProvider>
           <header className="header">
             <div className="wrap header-in">
-              <Link href="/" className="logo">{shop}</Link>
+              <Link href="/" className="logo">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png" alt={shop} width={46} height={46} />
+                <span>{shop}</span>
+              </Link>
               <form action="/" className="search">
                 <input name="q" placeholder="Tìm sản phẩm..." />
               </form>
@@ -28,7 +32,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <footer className="footer">
             <div className="wrap foot-grid">
               <div>
-                <div className="foot-logo">{shop}</div>
+                <div className="foot-logo">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/logo.png" alt="" width={40} height={40} />
+                  {shop}
+                </div>
                 <p>{info.tagline}.</p>
                 {info.address && <p>📍 {info.address}</p>}
                 {info.openHours && <p>🕘 {info.openHours}</p>}

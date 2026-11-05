@@ -39,12 +39,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
       {home && (
         <>
           <section className="hero">
-            <div>
+            <div className="hero-main">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="" className="hero-logo" />
+              <div>
               <h1>{shop.name}</h1>
               <p>{shop.tagline}</p>
               <div className="hero-cta">
                 <a href="#tat-ca" className="btn white">Mua sắm ngay</a>
                 <Link href="/tra-cuu" className="btn outline-white">Tra cứu đơn hàng</Link>
+              </div>
               </div>
             </div>
             <div className="hero-stats">
