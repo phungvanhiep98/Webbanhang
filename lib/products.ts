@@ -15,6 +15,7 @@ export type Product = {
   variantStock?: Record<string, number>; // tồn kho từng phân loại
   optionNames?: string[]; // vd ["Màu sắc", "Kích cỡ"]; phân loại 2 cấp ghi dạng "Hồng,20-21"
   optionImages?: Record<string, string>; // ảnh theo phân loại cấp 1
+  sizeChart?: string;
   description: string;
 };
 

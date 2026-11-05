@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/components/Cart";
 import { vnd } from "@/lib/format";
 import type { Product } from "@/lib/products";
+import { SizeChart } from "@/components/SizeChart";
+import { FREE_SHIP_FROM } from "@/lib/format";
 
 export function ProductView({ p }: { p: Product }) {
   const { add } = useCart();
@@ -76,7 +78,7 @@ export function ProductView({ p }: { p: Product }) {
         </div>
         {options.map((vals, t) => (
           <div className="row" key={t}>
-            <label>{p.optionNames?.[t] ?? "Phân loại"}</label>
+            <label>{p.optionNames?.[t] ?? "Phân loại"}{t === tiers - 1 && p.sizeChart && <><br /><SizeChart src={p.sizeChart} /></>}</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, flex: 1 }}>
               {vals.map((v) => {
                 const ok = available(t, v);
@@ -107,6 +109,12 @@ export function ProductView({ p }: { p: Product }) {
           <button className="btn" disabled={p.stock <= 0} onClick={() => go(true)}>{p.stock <= 0 ? "Hết hàng" : "Mua ngay"}</button>
         </div>
         {msg && <div style={{ color: msg.includes("✓") ? "var(--ok)" : "#c00" }}>{msg}</div>}
+        {tiers === 0 && p.sizeChart && <SizeChart src={p.sizeChart} />}
+        <ul className="pd-perks">
+          <li>🚚 Miễn phí vận chuyển đơn từ {vnd(FREE_SHIP_FROM)}</li>
+          <li>💵 Thanh toán khi nhận hàng hoặc chuyển khoản QR</li>
+          <li>📦 Giao hàng toàn quốc, tra cứu đơn ngay trên web</li>
+        </ul>
       </div>
     </div>
   );

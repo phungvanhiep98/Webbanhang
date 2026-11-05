@@ -78,6 +78,7 @@ for (const b of basic) {
     stock, sold: ov.sold ?? 0,
     images: images.length ? images : ["/products/placeholder.svg"],
     variants, optionNames, variantPrices, variantStock, optionImages,
+    sizeChart: /^https?:\/\//.test(String(m["Size Chart Image"] ?? "").trim()) ? String(m["Size Chart Image"]).trim() : undefined,
     description: String(b["Mô tả Sản phẩm"] ?? "").trim(),
   });
 }
