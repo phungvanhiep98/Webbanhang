@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { vnpayVerify } from "@/lib/payments";
-import { getOrder, setStatus } from "@/lib/db";
+import { getOrder } from "@/lib/db";
+import { changeStatus } from "@/lib/orders";
 
 // VNPay gọi server-to-server để báo kết quả (khai báo URL này trong trang quản trị VNPay)
 export async function GET(req: NextRequest) {
@@ -10,6 +11,6 @@ export async function GET(req: NextRequest) {
   if (!order) return NextResponse.json({ RspCode: "01", Message: "Order not found" });
   if (r.amount !== order.total) return NextResponse.json({ RspCode: "04", Message: "Invalid amount" });
   if (order.status !== "pending") return NextResponse.json({ RspCode: "02", Message: "Order already confirmed" });
-  await setStatus(order.id, r.success ? "paid" : "cancelled", r.transactionNo);
+  await changeStatus(order.id, r.success ? "paid" : "cancelled", r.transactionNo);
   return NextResponse.json({ RspCode: "00", Message: "Confirm Success" });
 }

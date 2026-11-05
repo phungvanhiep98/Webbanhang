@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { products, categories, type Product } from "@/lib/products";
+import type { Product } from "@/lib/products";
+import { getCatalog, categoriesOf } from "@/lib/catalog";
 import { ProductCard } from "@/components/ProductCard";
 import { shop } from "@/lib/shop";
 import { FREE_SHIP_FROM, vnd } from "@/lib/format";
@@ -17,8 +18,12 @@ function qs(params: Record<string, string>) {
   return s ? `/?${s}` : "/";
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string; c?: string; s?: string }> }) {
   const { q = "", c = "", s = "" } = await searchParams;
+  const products = await getCatalog();
+  const categories = () => categoriesOf(products);
   const sort = SORTS[s] ? s : "";
   const norm = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
   const list = products

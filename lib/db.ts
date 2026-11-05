@@ -57,7 +57,24 @@ interface Store {
   deleteCoupon(code: string): Promise<void>;
   setCouponActive(code: string, active: boolean): Promise<void>;
   useCoupon(code: string): Promise<boolean>; // +1 lượt nếu còn lượt
+  productEdits(): Promise<Row[]>;
+  saveProductEdit(e: ProductEdit): Promise<void>;
+  setting(key: string): Promise<string | undefined>;
+  setSetting(key: string, value: string): Promise<void>;
 }
+
+// Chỉnh sửa sản phẩm từ trang admin, ghi đè lên data/products.json
+export type ProductEdit = {
+  id: string;
+  hidden: boolean;
+  prices: Record<string, number> | null; // theo phân loại ("" = sản phẩm không phân loại)
+  stock: Record<string, number> | null;
+  sold_extra: number; // số đã bán thêm trên web
+};
+const EDIT_TABLE = `CREATE TABLE IF NOT EXISTS product_edits (
+    id TEXT PRIMARY KEY, hidden INTEGER NOT NULL DEFAULT 0, prices TEXT, stock TEXT, sold_extra INTEGER NOT NULL DEFAULT 0)`;
+const SETTINGS_TABLE = "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)";
+const editValues = (e: ProductEdit) => [e.id, e.hidden ? 1 : 0, e.prices ? JSON.stringify(e.prices) : null, e.stock ? JSON.stringify(e.stock) : null, e.sold_extra];
 
 const COUPON_COLS = "code, kind, value, min_order, max_discount, max_uses, expires_at, active";
 const couponValues = (c: Coupon) => [c.code, c.kind, c.value, c.min_order, c.max_discount, c.max_uses, c.expires_at, c.active ? 1 : 0];
@@ -80,7 +97,7 @@ function postgresStore(url: string): Store {
     payment_method TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', payment_ref TEXT)`)
     .then(() => pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount INTEGER NOT NULL DEFAULT 0"))
     .then(() => pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon TEXT"))
-    .then(() => pool.query(COUPON_TABLE));
+    .then(() => pool.query(COUPON_TABLE)).then(() => pool.query(EDIT_TABLE)).then(() => pool.query(SETTINGS_TABLE));
   const q = async (sql: string, args: unknown[] = []) => { await ready; return (await pool.query(sql, args)).rows as Row[]; };
   return {
     insert: async (o) => { await q(`INSERT INTO orders (${COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, values(o)); },
@@ -95,6 +112,11 @@ function postgresStore(url: string): Store {
     deleteCoupon: async (code) => { await q("DELETE FROM coupons WHERE code = $1", [code]); },
     setCouponActive: async (code, a) => { await q("UPDATE coupons SET active = $1 WHERE code = $2", [a ? 1 : 0, code]); },
     useCoupon: async (code) => (await q("UPDATE coupons SET used = used + 1 WHERE code = $1 AND (max_uses = 0 OR used < max_uses) RETURNING code", [code])).length > 0,
+    productEdits: () => q("SELECT * FROM product_edits"),
+    saveProductEdit: async (e) => { await q(`INSERT INTO product_edits (id, hidden, prices, stock, sold_extra) VALUES ($1,$2,$3,$4,$5)
+      ON CONFLICT (id) DO UPDATE SET hidden=$2, prices=$3, stock=$4, sold_extra=$5`, editValues(e)); },
+    setting: async (k) => (await q("SELECT value FROM settings WHERE key = $1", [k]))[0]?.value as string | undefined,
+    setSetting: async (k, v) => { await q("INSERT INTO settings (key, value) VALUES ($1,$2) ON CONFLICT (key) DO UPDATE SET value=$2", [k, v]); },
   };
 }
 
@@ -117,7 +139,7 @@ function sqliteStore(): Store {
   for (const col of ["discount INTEGER NOT NULL DEFAULT 0", "coupon TEXT"]) {
     try { db.exec(`ALTER TABLE orders ADD COLUMN ${col}`); } catch { /* đã có cột */ }
   }
-  db.exec(COUPON_TABLE);
+  db.exec(COUPON_TABLE); db.exec(EDIT_TABLE); db.exec(SETTINGS_TABLE);
   return {
     insert: async (o) => { db.prepare(`INSERT INTO orders (${COLS}) VALUES (${values(o).map(() => "?").join(",")})`).run(...values(o)); },
     get: async (id) => db.prepare("SELECT * FROM orders WHERE id = ?").get(id) as Row | undefined,
@@ -132,6 +154,11 @@ function sqliteStore(): Store {
     deleteCoupon: async (code) => { db.prepare("DELETE FROM coupons WHERE code = ?").run(code); },
     setCouponActive: async (code, a) => { db.prepare("UPDATE coupons SET active = ? WHERE code = ?").run(a ? 1 : 0, code); },
     useCoupon: async (code) => db.prepare("UPDATE coupons SET used = used + 1 WHERE code = ? AND (max_uses = 0 OR used < max_uses)").run(code).changes > 0,
+    productEdits: async () => db.prepare("SELECT * FROM product_edits").all() as Row[],
+    saveProductEdit: async (e) => { db.prepare(`INSERT INTO product_edits (id, hidden, prices, stock, sold_extra) VALUES (?,?,?,?,?)
+      ON CONFLICT (id) DO UPDATE SET hidden=excluded.hidden, prices=excluded.prices, stock=excluded.stock, sold_extra=excluded.sold_extra`).run(...editValues(e)); },
+    setting: async (k) => (db.prepare("SELECT value FROM settings WHERE key = ?").get(k) as { value: string } | undefined)?.value,
+    setSetting: async (k, v) => { db.prepare("INSERT INTO settings (key, value) VALUES (?,?) ON CONFLICT (key) DO UPDATE SET value=excluded.value").run(k, v); },
   };
 }
 
@@ -169,3 +196,13 @@ export function newOrderId() {
   const ymd = `${String(d.getUTCFullYear()).slice(2)}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
   return `DH${ymd}${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 }
+
+export const listProductEdits = async (): Promise<ProductEdit[]> =>
+  (await store().productEdits()).map((r) => ({
+    id: String(r.id), hidden: Number(r.hidden) === 1,
+    prices: r.prices ? JSON.parse(r.prices as string) : null, stock: r.stock ? JSON.parse(r.stock as string) : null,
+    sold_extra: Number(r.sold_extra ?? 0),
+  }));
+export const saveProductEdit = (e: ProductEdit) => store().saveProductEdit(e);
+export const getSetting = (k: string) => store().setting(k);
+export const setSetting = (k: string, v: string) => store().setSetting(k, v);

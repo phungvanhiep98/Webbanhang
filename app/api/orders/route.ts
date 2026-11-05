@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProduct, priceOf, stockOf } from "@/lib/products";
+import { priceOf, stockOf } from "@/lib/products";
+import { getCatalog, adjustStock } from "@/lib/catalog";
+import { notifyNewOrder } from "@/lib/notify";
 import { insertOrder, newOrderId, OrderItem, useCoupon } from "@/lib/db";
 import { checkCoupon } from "@/lib/coupons";
 import { shippingFor } from "@/lib/format";
@@ -22,8 +24,9 @@ export async function POST(req: NextRequest) {
 
   // Tính lại giá ở server, không tin giá gửi từ trình duyệt
   const items: OrderItem[] = [];
+  const catalog = await getCatalog();
   for (const it of Array.isArray(b.items) ? b.items : []) {
-    const p = getProduct(String(it.productId));
+    const p = catalog.find((x) => x.id === String(it.productId));
     const qty = Math.floor(Number(it.qty));
     if (!p || qty < 1) return NextResponse.json({ error: "Sản phẩm không hợp lệ" }, { status: 400 });
     if (p.variants.length && !p.variants.includes(it.variant))
@@ -52,6 +55,8 @@ export async function POST(req: NextRequest) {
     total: subtotal - discount + shipping, payment_method: method,
   };
   await insertOrder(order);
+  await adjustStock(items, -1).catch(console.error);
+  await notifyNewOrder(order).catch(console.error);
 
   let redirect = `/don-hang/${order.id}`;
   try {

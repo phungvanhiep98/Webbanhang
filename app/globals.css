@@ -165,3 +165,11 @@ th { color: var(--muted); font-weight: 500; }
 .coupon-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0 14px; }
 .ship-bar { height: 6px; background: #ffe4dc; border-radius: 3px; overflow: hidden; margin: 6px 0 10px; }
 .ship-bar > div { height: 100%; background: var(--brand); }
+.admin-nav { flex-wrap: wrap; }
+.ap { padding: 12px 16px; margin-bottom: 8px; }
+.ap summary { display: flex; gap: 12px; align-items: center; cursor: pointer; list-style: none; }
+.ap summary::-webkit-details-marker { display: none; }
+.ap-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ap-table { margin-top: 12px; }
+.ap-table td, .ap-table th { padding: 6px 8px; }
+.ap-table input { width: 120px; padding: 6px 8px; border: 1px solid #ccc; border-radius: 2px; font-size: 14px; }

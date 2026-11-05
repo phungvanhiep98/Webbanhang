@@ -2,7 +2,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isAdmin, loginAdmin } from "@/lib/admin";
-import { setStatus, saveCoupon, setCouponActive, deleteCoupon } from "@/lib/db";
+import { saveCoupon, setCouponActive, deleteCoupon, saveProductEdit, listProductEdits } from "@/lib/db";
+import { changeStatus } from "@/lib/orders";
+import { products } from "@/lib/products";
+import { connectTelegram, sendTelegram } from "@/lib/notify";
 import { STATUS_LABELS } from "@/lib/format";
 
 export async function login(form: FormData) {
@@ -14,7 +17,7 @@ export async function updateStatus(form: FormData) {
   if (!(await isAdmin())) throw new Error("Unauthorized");
   const status = String(form.get("status"));
   if (!(status in STATUS_LABELS)) throw new Error("Bad status");
-  await setStatus(String(form.get("id")), status);
+  await changeStatus(String(form.get("id")), status);
   revalidatePath("/admin");
 }
 
@@ -44,4 +47,36 @@ export async function deleteCouponAction(form: FormData) {
   if (!(await isAdmin())) throw new Error("Unauthorized");
   await deleteCoupon(String(form.get("code")));
   revalidatePath("/admin/ma-giam-gia");
+}
+
+// Lưu giá, tồn kho, ẩn/hiện của một sản phẩm
+export async function saveProductAction(form: FormData) {
+  if (!(await isAdmin())) throw new Error("Unauthorized");
+  const id = String(form.get("id"));
+  const p = products.find((x) => x.id === id);
+  if (!p) throw new Error("Không có sản phẩm");
+  const old = (await listProductEdits()).find((e) => e.id === id);
+  const keys = p.variants.length ? p.variants : [""];
+  const n = (v: FormDataEntryValue | null) => { const s = String(v ?? "").replace(/\D/g, ""); return s === "" ? null : Number(s); };
+  const prices: Record<string, number> = {}, stock: Record<string, number> = {};
+  keys.forEach((k, i) => {
+    const pr = n(form.get(`price_${i}`)), st = n(form.get(`stock_${i}`));
+    if (pr != null && pr > 0) prices[k] = pr;
+    if (st != null) stock[k] = st;
+  });
+  await saveProductEdit({ id, hidden: form.get("hidden") === "1", prices, stock, sold_extra: old?.sold_extra ?? 0 });
+  revalidatePath("/admin/san-pham");
+  redirect(`/admin/san-pham?ok=${id}`);
+}
+
+export async function connectTelegramAction() {
+  if (!(await isAdmin())) throw new Error("Unauthorized");
+  const r = await connectTelegram();
+  redirect(r.ok ? `/admin/thong-bao?ok=${encodeURIComponent(r.name)}` : `/admin/thong-bao?loi=${encodeURIComponent(r.error)}`);
+}
+
+export async function testTelegramAction() {
+  if (!(await isAdmin())) throw new Error("Unauthorized");
+  const ok = await sendTelegram("🔔 Tin nhắn thử từ web shop. Nhận được là thông báo đã hoạt động!");
+  redirect(ok ? "/admin/thong-bao?thu=1" : "/admin/thong-bao?loi=" + encodeURIComponent("Không gửi được, hãy bấm Kết nối lại"));
 }

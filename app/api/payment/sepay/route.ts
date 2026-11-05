@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { getOrder, setStatus } from "@/lib/db";
+import { getOrder } from "@/lib/db";
+import { changeStatus } from "@/lib/orders";
 
 // SePay gọi vào đây mỗi khi tài khoản ngân hàng có giao dịch.
 // Cấu hình trên my.sepay.vn: Webhook URL = <SITE_URL>/api/payment/sepay,
@@ -31,6 +32,6 @@ export async function POST(req: NextRequest) {
     console.warn(`SePay: đơn ${id} chuyển thiếu ${t.transferAmount}/${order.total}`);
     return ok();
   }
-  await setStatus(id, "paid", `SePay ${t.referenceCode || t.id}`);
+  await changeStatus(id, "paid", `SePay ${t.referenceCode || t.id}`);
   return ok();
 }

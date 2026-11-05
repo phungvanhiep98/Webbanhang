@@ -1,21 +1,22 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getProduct, products } from "@/lib/products";
+import { getCatalog } from "@/lib/catalog";
 import { ProductView } from "./ProductView";
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
 
-export function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const p = getProduct((await params).slug);
+  const slug = (await params).slug;
+  const p = (await getCatalog()).find((x) => x.slug === slug || x.id === slug);
   return p ? { title: p.name, description: p.description.slice(0, 160), openGraph: { images: [p.images[0]] } } : {};
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
-  const p = getProduct((await params).slug);
+  const slug = (await params).slug;
+  const products = await getCatalog();
+  const p = products.find((x) => x.slug === slug || x.id === slug);
   if (!p) notFound();
   const related = products.filter((x) => x.category === p.category && x.id !== p.id)
     .concat(products.filter((x) => x.category !== p.category))
