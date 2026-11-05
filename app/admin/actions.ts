@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isAdmin, loginAdmin } from "@/lib/admin";
 import { saveCoupon, setCouponActive, deleteCoupon, saveProductEdit, listProductEdits, listPosts, savePost, deletePost, setSetting } from "@/lib/db";
-import { slugify } from "@/lib/blog";
+import { slugify, STATIC_POSTS } from "@/lib/blog";
 import { changeStatus } from "@/lib/orders";
 import { products } from "@/lib/products";
 import { connectTelegram, sendTelegram } from "@/lib/notify";
@@ -89,7 +89,8 @@ export async function savePostAction(form: FormData) {
   const old = get("old_slug") || null;
   const slug = slugify(get("slug") || title);
   if (!title || !slug) redirect(`/admin/bai-viet/${old ?? "moi"}?loi=1`);
-  const existing = (await listPosts()).find((p) => p.slug === (old ?? slug));
+  const all = [...(await listPosts()), ...STATIC_POSTS];
+  const existing = all.find((p) => p.slug === (old ?? slug));
   if (!old && existing) redirect("/admin/bai-viet/moi?trung=1");
   const now = new Date().toISOString();
   const cover = get("cover");
@@ -104,7 +105,11 @@ export async function savePostAction(form: FormData) {
 
 export async function deletePostAction(form: FormData) {
   if (!(await isAdmin())) throw new Error("Unauthorized");
-  await deletePost(String(form.get("slug")));
+  const slug = String(form.get("slug"));
+  const st = STATIC_POSTS.find((p) => p.slug === slug);
+  // Bài có sẵn trong code không xóa hẳn được: chuyển thành ẩn
+  if (st) await savePost({ ...st, published: false, updated_at: new Date().toISOString() });
+  else await deletePost(slug);
   redirect("/admin/bai-viet");
 }
 

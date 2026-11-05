@@ -2,6 +2,10 @@ import { listPosts, savePost, getSetting, setSetting, type Post } from "@/lib/db
 import { shop } from "@/lib/shop";
 import { FREE_SHIP_FROM, vnd } from "@/lib/format";
 import seed from "@/data/blog-seed.json";
+import staticPosts from "@/data/blog-posts.json";
+
+// Bài viết có sẵn trong code (data/blog-posts.json). Sửa/ẩn trong admin thì bản trong database được ưu tiên.
+export const STATIC_POSTS = staticPosts as Post[];
 
 export const slugify = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d")
   .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
@@ -20,11 +24,14 @@ async function ensureSeed() {
 export async function getPosts(opts: { all?: boolean } = {}) {
   try {
     if (opts.all) await ensureSeed();
-    const list = await listPosts();
+    const db = await listPosts();
+    const list = [...db, ...STATIC_POSTS.filter((s) => !db.some((d) => d.slug === s.slug))]
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
     return opts.all ? list : list.filter((p) => p.published);
   } catch (e) {
     console.error("Không đọc được bài viết", e);
-    return [] as Post[];
+    const list = [...STATIC_POSTS].sort((a, b) => b.created_at.localeCompare(a.created_at));
+    return opts.all ? list : list.filter((p) => p.published);
   }
 }
 
