@@ -17,7 +17,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
       </form>
     );
 
-  const all = listOrders();
+  const all = await listOrders();
   const orders = s ? all.filter((o) => o.status === s) : all;
   const revenue = all.filter((o) => ["paid", "confirmed", "shipping", "completed"].includes(o.status)).reduce((t, o) => t + o.total, 0);
 
@@ -41,7 +41,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
             {orders.map((o) => (
               <tr key={o.id}>
                 <td><a href={`/don-hang/${o.id}`} style={{ color: "var(--brand)" }}>{o.id}</a></td>
-                <td className="muted">{new Date(o.created_at + "Z").toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</td>
+                <td className="muted">{new Date(o.created_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</td>
                 <td>{o.customer_name}<br /><span className="muted">{o.phone}<br />{o.address}</span>{o.note && <div className="muted">Ghi chú: {o.note}</div>}</td>
                 <td>{o.items.map((i, k) => <div key={k}>{i.name}{i.variant ? ` (${i.variant})` : ""} × {i.qty}</div>)}</td>
                 <td className="price">{vnd(o.total)}</td>

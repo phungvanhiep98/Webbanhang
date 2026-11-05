@@ -28,7 +28,11 @@ npm run dev                  # mở http://localhost:3000
 - VNPay/MoMo: trạng thái tự chuyển "Đã thanh toán" qua IPN
   (`/api/payment/vnpay/ipn`, `/api/payment/momo/ipn`).
 
-## Khi đưa lên hosting
+## Đưa lên mạng bằng Vercel (miễn phí)
 
-SQLite cần ổ đĩa lưu lâu dài (VPS, Railway, Render có disk). Nếu dùng Vercel thì phải
-chuyển phần lưu đơn trong `lib/db.ts` sang Postgres (vd Neon, miễn phí).
+1. Vào https://vercel.com, đăng nhập bằng GitHub, bấm **Add New → Project**, chọn repo `Webbanhang`, bấm **Deploy**.
+2. Trong project vừa tạo: **Storage → Create Database → Neon (Postgres)** → Connect. Vercel tự thêm biến `DATABASE_URL`.
+3. **Settings → Environment Variables**: thêm `ADMIN_PASSWORD`, `SHOP_NAME`, `SITE_URL` (link web Vercel), `BANK_ID`, `BANK_ACCOUNT_NO`, `BANK_ACCOUNT_NAME`.
+4. **Deployments → Redeploy** để áp dụng.
+
+Không có `DATABASE_URL` thì web lưu đơn vào file SQLite `data/shop.db` (dùng khi chạy trên máy hoặc VPS).

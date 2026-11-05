@@ -14,6 +14,6 @@ export async function updateStatus(form: FormData) {
   if (!(await isAdmin())) throw new Error("Unauthorized");
   const status = String(form.get("status"));
   if (!(status in STATUS_LABELS)) throw new Error("Bad status");
-  setStatus(String(form.get("id")), status);
+  await setStatus(String(form.get("id")), status);
   revalidatePath("/admin");
 }

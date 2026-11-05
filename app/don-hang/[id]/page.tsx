@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function OrderPage({ params, searchParams }: {
   params: Promise<{ id: string }>; searchParams: Promise<{ loi?: string }>;
 }) {
-  const order = getOrder((await params).id);
+  const order = await getOrder((await params).id);
   if (!order) notFound();
   const { loi } = await searchParams;
   const b = bankInfo();

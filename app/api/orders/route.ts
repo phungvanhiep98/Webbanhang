@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     address, note: String(b.note ?? "") || null, items, subtotal, shipping,
     total: subtotal + shipping, payment_method: method,
   };
-  insertOrder(order);
+  await insertOrder(order);
 
   let redirect = `/don-hang/${order.id}`;
   try {
