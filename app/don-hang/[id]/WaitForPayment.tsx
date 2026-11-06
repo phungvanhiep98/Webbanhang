@@ -15,5 +15,10 @@ export function WaitForPayment({ id }: { id: string }) {
     }, 4000);
     return () => clearInterval(t);
   }, [id, router]);
-  return <p className="muted">⏳ Đang chờ xác nhận thanh toán, trang sẽ tự cập nhật khi shop nhận được tiền.</p>;
+  return (
+    <div className="pay-wait">
+      <span className="spinner" aria-hidden />
+      <div><b>Đang chờ xác nhận thanh toán...</b><div>Trang sẽ tự cập nhật ngay khi shop nhận được tiền, bạn không cần tải lại.</div></div>
+    </div>
+  );
 }

@@ -1,8 +1,8 @@
 export const vnd = (n: number) =>
   new Intl.NumberFormat("vi-VN").format(Math.round(n)) + "₫";
 
-export const SHIPPING_FEE = 30000;
-export const FREE_SHIP_FROM = 300000;
+export const SHIPPING_FEE = 15000;
+export const FREE_SHIP_FROM = 150000;
 export const shippingFor = (subtotal: number) =>
   subtotal >= FREE_SHIP_FROM ? 0 : SHIPPING_FEE;
 

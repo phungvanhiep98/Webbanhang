@@ -4,6 +4,7 @@ import { getOrder } from "@/lib/db";
 import { vnd, PAYMENT_LABELS, STATUS_LABELS } from "@/lib/format";
 import { bankInfo, vietQrUrl } from "@/lib/payments";
 import { WaitForPayment } from "./WaitForPayment";
+import { CopyButton } from "./CopyButton";
 
 export const dynamic = "force-dynamic";
 
@@ -44,11 +45,14 @@ export default async function OrderPage({ params, searchParams }: {
           <div>
             <h3 style={{ marginTop: 0 }}>Quét mã để chuyển khoản</h3>
             <p>Ngân hàng: <b>{b.bankId}</b></p>
-            <p>Số tài khoản: <b>{b.accountNo}</b></p>
+            <p>Số tài khoản: <b>{b.accountNo}</b> <CopyButton text={b.accountNo} /></p>
             <p>Chủ tài khoản: <b>{b.accountName}</b></p>
             <p>Số tiền: <b className="price">{vnd(order.total)}</b></p>
-            <p>Nội dung: <b>{order.id}</b></p>
-            <p className="muted">Vui lòng giữ nguyên nội dung chuyển khoản. Đơn sẽ được xác nhận khi shop nhận được tiền.</p>
+            <p>Nội dung: <b className="pay-code">{order.id}</b> <CopyButton text={order.id} /></p>
+            <div className="pay-warn">
+              ⚠️ <b>Vui lòng giữ nguyên nội dung chuyển khoản <span>{order.id}</span></b>
+              <div>Không sửa hoặc xóa nội dung để hệ thống tự xác nhận đơn khi shop nhận được tiền.</div>
+            </div>
             <WaitForPayment id={order.id} />
           </div>
         </div>
