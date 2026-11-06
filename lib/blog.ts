@@ -4,7 +4,7 @@ import { FREE_SHIP_FROM, vnd } from "@/lib/format";
 import seed from "@/data/blog-seed.json";
 import staticPosts from "@/data/blog-posts.json";
 
-// Bài viết có sẵn trong code (data/blog-posts.json). Sửa/ẩn trong admin thì bản trong database được ưu tiên.
+// Bài viết có sẵn trong code (data/blog-posts.json). Nếu bài cũng có trong database (sửa/ẩn trong admin), bản có updated_at mới hơn được dùng.
 export const STATIC_POSTS = staticPosts as Post[];
 
 export const slugify = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d")
@@ -25,7 +25,10 @@ export async function getPosts(opts: { all?: boolean } = {}) {
   try {
     if (opts.all) await ensureSeed();
     const db = await listPosts();
-    const list = [...db, ...STATIC_POSTS.filter((s) => !db.some((d) => d.slug === s.slug))]
+    // Cùng một bài: lấy bản sửa sau cùng (sửa trong admin hoặc cập nhật trong code)
+    const merged = new Map(STATIC_POSTS.map((p) => [p.slug, p]));
+    for (const d of db) { const s = merged.get(d.slug); if (!s || d.updated_at >= s.updated_at) merged.set(d.slug, d); }
+    const list = [...merged.values()]
       .sort((a, b) => b.created_at.localeCompare(a.created_at));
     return opts.all ? list : list.filter((p) => p.published);
   } catch (e) {
