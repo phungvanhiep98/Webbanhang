@@ -5,7 +5,6 @@ import { getPost, getPosts } from "@/lib/blog";
 import { renderMarkdown, plainText } from "@/lib/markdown";
 import { getCatalog } from "@/lib/catalog";
 import { ProductCard } from "@/components/ProductCard";
-import { ShareButtons } from "@/components/ShareButtons";
 import { shop } from "@/lib/shop";
 import { siteUrl } from "@/lib/payments";
 
@@ -46,7 +45,6 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           <img src={p.cover} alt="" referrerPolicy="no-referrer" className="article-cover" />
         )}
         <div className="prose" dangerouslySetInnerHTML={{ __html: renderMarkdown(p.content) }} />
-        <ShareButtons title={p.title} />
       </article>
       {more.length > 0 && (
         <div className="panel">
