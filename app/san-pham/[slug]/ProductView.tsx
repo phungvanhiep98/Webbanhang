@@ -70,7 +70,7 @@ export function ProductView({ p }: { p: Product }) {
       </div>
       <div>
         <h1>{p.name}</h1>
-        <div className="muted">{p.sold ? `Đã bán ${p.sold.toLocaleString("vi-VN")} (tính cả bán tại shop và trên Shopee)` : "Hàng mới về"}</div>
+        <div className="muted">{p.sold ? `Đã bán ${p.sold.toLocaleString("vi-VN")}` : "Hàng mới về"}</div>
         <div className="bigprice">
           {vnd(price)}
           {ratio > 1 && <span className="old">{vnd(Math.round((price * ratio) / 1000) * 1000)}</span>}
