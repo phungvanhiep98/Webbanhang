@@ -59,6 +59,8 @@ interface Store {
   useCoupon(code: string): Promise<boolean>; // +1 lượt nếu còn lượt
   productEdits(): Promise<Row[]>;
   posts(): Promise<Row[]>;
+  trackView(v: { day: string; path: string; visitor: string; source: string }): Promise<void>;
+  viewStats(sinceDay: string): Promise<{ daily: Row[]; pages: Row[]; sources: Row[] }>;
   savePost(p: Post, oldSlug: string | null): Promise<void>;
   deletePost(slug: string): Promise<void>;
   saveProductEdit(e: ProductEdit): Promise<void>;
@@ -84,6 +86,12 @@ const POST_TABLE = `CREATE TABLE IF NOT EXISTS posts (
     slug TEXT PRIMARY KEY, title TEXT NOT NULL, excerpt TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '',
     cover TEXT NOT NULL DEFAULT '', published INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`;
 const postValues = (p: Post) => [p.slug, p.title, p.excerpt, p.content, p.cover, p.published ? 1 : 0, p.created_at, p.updated_at];
+const VIEWS_COLS = `day TEXT NOT NULL, ts TEXT NOT NULL, path TEXT NOT NULL, visitor TEXT NOT NULL, source TEXT NOT NULL`;
+const VIEWS_SQL = (ph: (i: number) => string) => ({
+  daily: `SELECT day, COUNT(*) AS views, COUNT(DISTINCT visitor) AS visitors FROM page_views WHERE day >= ${ph(1)} GROUP BY day ORDER BY day`,
+  pages: `SELECT path, COUNT(*) AS views, COUNT(DISTINCT visitor) AS visitors FROM page_views WHERE day >= ${ph(1)} GROUP BY path ORDER BY views DESC LIMIT 15`,
+  sources: `SELECT source, COUNT(DISTINCT visitor || day) AS visitors FROM page_views WHERE day >= ${ph(1)} GROUP BY source ORDER BY visitors DESC`,
+});
 const SETTINGS_TABLE = "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)";
 const editValues = (e: ProductEdit) => [e.id, e.hidden ? 1 : 0, e.prices ? JSON.stringify(e.prices) : null, e.stock ? JSON.stringify(e.stock) : null, e.sold_extra];
 
@@ -108,7 +116,9 @@ function postgresStore(url: string): Store {
     payment_method TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', payment_ref TEXT)`)
     .then(() => pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount INTEGER NOT NULL DEFAULT 0"))
     .then(() => pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon TEXT"))
-    .then(() => pool.query(COUPON_TABLE)).then(() => pool.query(EDIT_TABLE)).then(() => pool.query(SETTINGS_TABLE)).then(() => pool.query(POST_TABLE));
+    .then(() => pool.query(COUPON_TABLE)).then(() => pool.query(EDIT_TABLE)).then(() => pool.query(SETTINGS_TABLE)).then(() => pool.query(POST_TABLE))
+    .then(() => pool.query(`CREATE TABLE IF NOT EXISTS page_views (id BIGSERIAL PRIMARY KEY, ${VIEWS_COLS})`))
+    .then(() => pool.query("CREATE INDEX IF NOT EXISTS page_views_day ON page_views (day)"));
   const q = async (sql: string, args: unknown[] = []) => { await ready; return (await pool.query(sql, args)).rows as Row[]; };
   return {
     insert: async (o) => { await q(`INSERT INTO orders (${COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, values(o)); },
@@ -135,6 +145,12 @@ function postgresStore(url: string): Store {
         ON CONFLICT (slug) DO UPDATE SET title=$2, excerpt=$3, content=$4, cover=$5, published=$6, updated_at=$8`, postValues(p));
     },
     deletePost: async (slug) => { await q("DELETE FROM posts WHERE slug = $1", [slug]); },
+    trackView: async (v) => { await q("INSERT INTO page_views (day, ts, path, visitor, source) VALUES ($1,$2,$3,$4,$5)", [v.day, new Date().toISOString(), v.path, v.visitor, v.source]); },
+    viewStats: async (since) => {
+      const S = VIEWS_SQL((i) => `$${i}`);
+      const [daily, pages, sources] = await Promise.all([q(S.daily, [since]), q(S.pages, [since]), q(S.sources, [since])]);
+      return { daily, pages, sources };
+    },
   };
 }
 
@@ -158,6 +174,8 @@ function sqliteStore(): Store {
     try { db.exec(`ALTER TABLE orders ADD COLUMN ${col}`); } catch { /* đã có cột */ }
   }
   db.exec(COUPON_TABLE); db.exec(EDIT_TABLE); db.exec(SETTINGS_TABLE); db.exec(POST_TABLE);
+  db.exec(`CREATE TABLE IF NOT EXISTS page_views (id INTEGER PRIMARY KEY AUTOINCREMENT, ${VIEWS_COLS})`);
+  db.exec("CREATE INDEX IF NOT EXISTS page_views_day ON page_views (day)");
   return {
     insert: async (o) => { db.prepare(`INSERT INTO orders (${COLS}) VALUES (${values(o).map(() => "?").join(",")})`).run(...values(o)); },
     get: async (id) => db.prepare("SELECT * FROM orders WHERE id = ?").get(id) as Row | undefined,
@@ -185,6 +203,11 @@ function sqliteStore(): Store {
         published=excluded.published, updated_at=excluded.updated_at`).run(...postValues(p));
     },
     deletePost: async (slug) => { db.prepare("DELETE FROM posts WHERE slug = ?").run(slug); },
+    trackView: async (v) => { db.prepare("INSERT INTO page_views (day, ts, path, visitor, source) VALUES (?,?,?,?,?)").run(v.day, new Date().toISOString(), v.path, v.visitor, v.source); },
+    viewStats: async (since) => {
+      const S = VIEWS_SQL(() => "?");
+      return { daily: db.prepare(S.daily).all(since) as Row[], pages: db.prepare(S.pages).all(since) as Row[], sources: db.prepare(S.sources).all(since) as Row[] };
+    },
   };
 }
 
@@ -240,3 +263,14 @@ const parsePost = (r: Row): Post => ({
 export const listPosts = async () => (await store().posts()).map(parsePost);
 export const savePost = (p: Post, oldSlug: string | null = null) => store().savePost(p, oldSlug);
 export const deletePost = (slug: string) => store().deletePost(slug);
+
+export const trackView = (v: { day: string; path: string; visitor: string; source: string }) => store().trackView(v);
+export async function viewStats(sinceDay: string) {
+  const r = await store().viewStats(sinceDay);
+  const n = (x: unknown) => Number(x ?? 0);
+  return {
+    daily: r.daily.map((d) => ({ day: String(d.day), views: n(d.views), visitors: n(d.visitors) })),
+    pages: r.pages.map((d) => ({ path: String(d.path), views: n(d.views), visitors: n(d.visitors) })),
+    sources: r.sources.map((d) => ({ source: String(d.source), visitors: n(d.visitors) })),
+  };
+}

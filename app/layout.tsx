@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { CartProvider, CartBadge } from "@/components/Cart";
 import { ChatButtons } from "@/components/ChatButtons";
+import { Tracker } from "@/components/Tracker";
 import { shop as info, telUrl, zaloUrl, messengerUrl } from "@/lib/shop";
 import { FREE_SHIP_FROM, vnd } from "@/lib/format";
 import { siteUrl } from "@/lib/payments";
@@ -77,6 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="wrap copy">© {new Date().getFullYear()} {shop}</div>
           </footer>
           <ChatButtons />
+          <Tracker />
         </CartProvider>
       </body>
     </html>

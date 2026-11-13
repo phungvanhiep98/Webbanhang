@@ -2,6 +2,7 @@ import Link from "next/link";
 
 const TABS = [
   ["orders", "/admin", "📋 Đơn hàng"],
+  ["stats", "/admin/thong-ke", "📊 Thống kê"],
   ["products", "/admin/san-pham", "👟 Sản phẩm"],
   ["coupons", "/admin/ma-giam-gia", "🎟️ Mã giảm giá"],
   ["posts", "/admin/bai-viet", "📝 Bài viết"],
