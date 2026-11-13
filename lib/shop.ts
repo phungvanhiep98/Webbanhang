@@ -3,10 +3,10 @@ import data from "@/data/shop.json";
 
 export const shop = {
   name: process.env.SHOP_NAME || "Shop Như Ý Bé",
-  ...(data as Record<string, string>),
+  ...(data as Record<string, unknown>),
 } as {
   name: string; tagline: string; hotline: string; zalo: string; messenger: string;
-  facebook: string; address: string; openHours: string; returnPolicy: string; shopee: string; googleVerification: string;
+  facebook: string; address: string; openHours: string; returnPolicy: string; shopee: string; googleVerification: string; soldOffline?: number;
 };
 
 const digits = (s: string) => s.replace(/\D/g, "");

@@ -1,10 +1,15 @@
 // Danh sách sản phẩm = data/products.json + chỉnh sửa trong admin (giá, tồn kho, ẩn/hiện) lưu ở database.
 import { products as base, type Product } from "@/lib/products";
+import { shop as shopInfo } from "@/lib/shop";
 import { listProductEdits, saveProductEdit, type ProductEdit, type OrderItem } from "@/lib/db";
 
 export type CatalogProduct = Product & { hidden: boolean };
 
-function apply(p: Product, e?: ProductEdit): CatalogProduct {
+// Số đã bán ngoài Shopee (bán trực tiếp), cộng vào mỗi sản phẩm. Sửa ở data/shop.json "soldOffline".
+const OFFLINE = Number(shopInfo.soldOffline ?? 0) || 0;
+
+function apply(p0: Product, e?: ProductEdit): CatalogProduct {
+  const p = OFFLINE ? { ...p0, sold: (p0.sold ?? 0) + OFFLINE } : p0;
   if (!e) return { ...p, hidden: false };
   const q: CatalogProduct = { ...p, hidden: e.hidden, sold: (p.sold ?? 0) + e.sold_extra };
   if (p.variants.length) {
