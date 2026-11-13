@@ -7,15 +7,19 @@ import { Tracker } from "@/components/Tracker";
 import { shop as info, telUrl, zaloUrl, messengerUrl } from "@/lib/shop";
 import { FREE_SHIP_FROM, vnd } from "@/lib/format";
 import { siteUrl } from "@/lib/payments";
+import { getAnnouncement } from "@/lib/announce";
 
 const shop = info.name;
-export const metadata: Metadata = { metadataBase: new URL(siteUrl()), title: shop, openGraph: { images: ["/logo.png"] }, description: `${shop} - ${info.tagline}. Giao hàng toàn quốc, thanh toán khi nhận hàng hoặc chuyển khoản QR.` };
+export const metadata: Metadata = { metadataBase: new URL(siteUrl()), title: shop,
+  ...(info.googleVerification ? { verification: { google: info.googleVerification } } : {}), openGraph: { images: ["/logo.png"] }, description: `${shop} - ${info.tagline}. Giao hàng toàn quốc, thanh toán khi nhận hàng hoặc chuyển khoản QR.` };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const announce = await getAnnouncement();
   return (
     <html lang="vi">
       <body>
         <CartProvider>
+          {announce && <div className="announce">{announce}</div>}
           <header className="header">
             <div className="wrap header-in">
               <Link href="/" className="logo">

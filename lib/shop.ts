@@ -6,7 +6,7 @@ export const shop = {
   ...(data as Record<string, string>),
 } as {
   name: string; tagline: string; hotline: string; zalo: string; messenger: string;
-  facebook: string; address: string; openHours: string; returnPolicy: string; shopee: string;
+  facebook: string; address: string; openHours: string; returnPolicy: string; shopee: string; googleVerification: string;
 };
 
 const digits = (s: string) => s.replace(/\D/g, "");

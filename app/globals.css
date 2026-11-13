@@ -247,3 +247,9 @@ th { color: var(--muted); font-weight: 500; }
   .stat-two { grid-template-columns: 1fr; }
   .src-row { grid-template-columns: 100px 1fr 32px; }
 }
+.announce { background: #fff1ec; color: var(--brand-dark); text-align: center; font-size: 13.5px; font-weight: 500; padding: 7px 16px; border-bottom: 1px solid #ffd9cc; }
+.share { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; font-size: 14px; }
+.share-btn { padding: 7px 14px; border-radius: 18px; border: 1px solid var(--line); background: #fff; font-size: 13.5px; cursor: pointer; color: #333; }
+.share-btn:hover { border-color: var(--brand); color: var(--brand); }
+.share-btn.main { background: var(--brand); border-color: var(--brand); color: #fff; }
+.share-btn.fb { color: #1877f2; border-color: #c9dcf9; }

@@ -118,3 +118,11 @@ export async function saveAboutAction(form: FormData) {
   await setSetting("about", String(form.get("about") ?? "").trim());
   redirect("/admin/bai-viet?about=1");
 }
+
+export async function saveAnnounceAction(form: FormData) {
+  if (!(await isAdmin())) throw new Error("Unauthorized");
+  await setSetting("announce_text", String(form.get("text") ?? "").trim().slice(0, 160));
+  await setSetting("announce_on", form.get("on") === "1" ? "1" : "0");
+  revalidatePath("/", "layout");
+  redirect("/admin/ma-giam-gia?saved=1");
+}

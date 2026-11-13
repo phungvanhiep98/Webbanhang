@@ -5,18 +5,31 @@ import { describe } from "@/lib/coupons";
 import { AdminNav } from "@/components/AdminNav";
 import { saveCouponAction, toggleCouponAction, deleteCouponAction } from "../actions";
 import { CouponKind } from "./CouponKind";
+import { getAnnouncementSetting } from "@/lib/announce";
+import { saveAnnounceAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function Coupons({ searchParams }: { searchParams: Promise<{ loi?: string }> }) {
+export default async function Coupons({ searchParams }: { searchParams: Promise<{ loi?: string; saved?: string }> }) {
   if (!(await isAdmin())) redirect("/admin");
-  const { loi } = await searchParams;
+  const { loi, saved } = await searchParams;
+  const ann = await getAnnouncementSetting();
   const list = await listCoupons();
   const today = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
 
   return (
     <>
       <AdminNav on="coupons" />
+      <form action={saveAnnounceAction} className="panel">
+        <h3 style={{ marginTop: 0 }}>Dải thông báo đầu web</h3>
+        <p className="muted" style={{ marginTop: 0, fontSize: 14 }}>Dòng chữ chạy trên cùng mọi trang, ví dụ để báo mã giảm giá: “🎁 Nhập mã WEB10 giảm 10k cho đơn đầu tiên”. Để trống thì dùng câu mặc định về freeship.</p>
+        <div className="field"><input name="text" defaultValue={ann.text} placeholder={ann.fallback} maxLength={160} /></div>
+        <div className="row" style={{ justifyContent: "space-between", margin: 0 }}>
+          <label style={{ width: "auto", color: "inherit" }}><input type="checkbox" name="on" value="1" defaultChecked={ann.on} /> Hiện dải thông báo</label>
+          <button className="btn">Lưu</button>
+        </div>
+        {saved && <p style={{ color: "var(--ok)", marginBottom: 0 }}>Đã lưu ✓</p>}
+      </form>
       <form action={saveCouponAction} className="panel">
         <h3 style={{ marginTop: 0 }}>Tạo mã giảm giá</h3>
         <p className="muted" style={{ marginTop: 0, fontSize: 14 }}>Khách nhập mã ở trang thanh toán. Nhập lại một mã đã có để sửa mã đó.</p>

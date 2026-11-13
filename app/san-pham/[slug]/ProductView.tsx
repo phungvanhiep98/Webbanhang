@@ -5,6 +5,7 @@ import { useCart } from "@/components/Cart";
 import { vnd } from "@/lib/format";
 import type { Product } from "@/lib/products";
 import { SizeChart } from "@/components/SizeChart";
+import { ShareButtons } from "@/components/ShareButtons";
 import { FREE_SHIP_FROM } from "@/lib/format";
 
 export function ProductView({ p }: { p: Product }) {
@@ -115,6 +116,7 @@ export function ProductView({ p }: { p: Product }) {
           <li>💵 Thanh toán khi nhận hàng hoặc chuyển khoản QR</li>
           <li>📦 Giao hàng toàn quốc, tra cứu đơn ngay trên web</li>
         </ul>
+        <ShareButtons title={p.name} />
       </div>
     </div>
   );
