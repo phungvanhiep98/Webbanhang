@@ -29,7 +29,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const picks = [...products].sort((a, b) => (b.sold ?? 0) - (a.sold ?? 0)).slice(0, 5);
   const ld = {
     "@context": "https://schema.org", "@type": "BlogPosting", headline: p.title, description: p.excerpt,
-    datePublished: p.created_at, dateModified: p.updated_at, image: p.cover || `${siteUrl()}/logo.png`,
+    datePublished: p.created_at, dateModified: p.updated_at, image: p.cover ? new URL(p.cover, siteUrl()).href : `${siteUrl()}/logo.png`,
     author: { "@type": "Organization", name: shop.name }, publisher: { "@type": "Organization", name: shop.name, logo: `${siteUrl()}/logo.png` },
     mainEntityOfPage: `${siteUrl()}/blog/${p.slug}`,
   };
